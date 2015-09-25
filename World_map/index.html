@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>D3 Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    <style>
+      body {
+        background: black;
+      }
+      circle {
+        fill: white;
+        opacity: 0.5;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+    //Configuration
+    var margin = {top:30,bottom:30,left:30,right:30};
+    var outerWidth = 1000;
+    var outerHeight = 500;
+    var radMin = 1;
+    var radMax = 10;
+
+    var svg = d3.select("body").append("svg")
+      .attr("width", outerWidth)
+      .attr("height", outerHeight);
+    var xScale = d3.scale.linear().range([margin.left, outerWidth-margin.right]);
+    var yScale = d3.scale.linear().range([outerHeight-margin.bottom, margin.top]);
+    var radScale = d3.scale.linear().range([radMin, radMax]);
+
+    function render(data)
+    {
+      console.log("x extent: " + d3.extent(data, function(d) { return d.longitude}));
+      console.log("y extent: " + d3.extent(data, function(d) { return d.latitude}));
+      console.log("rad extent: " + d3.extent(data, function(d) { return d.population}));
+
+      xScale.domain(d3.extent(data, function(d) { return d.longitude}));
+      yScale.domain(d3.extent(data, function(d) { return d.latitude}));
+      radScale.domain(d3.extent(data, function(d) {return d.population}));
+
+      //Data Binding
+      var circles = svg.selectAll("circle").data(data);
+
+      //Enter
+      circles.enter().append("circle")
+        .attr("cx", function(d) { return xScale(d.longitude); })
+        .attr("cy", function(d) { return yScale(d.latitude) ;})
+        .attr("r", function(d) {return radScale(d.population);});
+
+      //Exit
+      circles.exit().remove();
+    }
+
+    function type(d)
+    {
+      d.longitude = +d.longitude;
+      d.latitude = +d.latitude;
+      d.population = +d.population;
+      return d;
+    }
+
+    d3.csv("cities.csv", type, render);
+    </script>
+  </body>
+</html>
