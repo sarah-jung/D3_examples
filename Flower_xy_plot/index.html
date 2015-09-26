@@ -4,39 +4,75 @@
     <meta charset="utf-8">
     <title>D3 Example</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    <style>
+      circle {
+        fill: none;
+      }
+    </style>
   </head>
   <body>
     <script>
       //Configuration
-      var margin = {top:30,bottom:30,left:30,right:30};
+      var margin = {top:30,bottom:80,left:80,right:30};
       var outerWidth = 300;
       var outerHeight = 250;
-      var circleRadius =5;
-      var circleColor = "green";
-      var xValue = "sepal_length";
+      var circleRadius = 5;
+      var xValue = "petal_width";
       var yValue = "petal_length";
+      var xAxisLabelOffset = 40;
+      var yAxisLabelOffset = 40;
+      var xAxisText = xValue;
+      var yAxisText = yValue;
 
       var innerHeight = outerHeight - margin.top - margin.bottom;
       var innerWidth = outerWidth - margin.left - margin.right;
+
       var svg = d3.select("body").append("svg")
         .attr("width", outerWidth)
         .attr("height", outerHeight);
-      var xScale = d3.scale.linear().range([margin.left, outerWidth - margin.right]);
-      var yScale = d3.scale.linear().range([outerHeight - margin.bottom, margin.top]);
+      var plotArea = d3.select("svg").append("g")
+        .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+      var xScale = d3.scale.linear().range([0, innerWidth]);
+      var yScale = d3.scale.linear().range([innerHeight, 0]);
+      var colorScale = d3.scale.category10();
+
+      //x axis
+      var xAxisG = plotArea.append("g")
+        .attr("transform", "translate(0," + innerHeight + ")");
+      var xAxisLabel = xAxisG.append("text")
+        .style("text-anchor", "middle")
+        .attr("transform", "translate(" + (innerWidth/2) + "," + xAxisLabelOffset + ")")
+        .text(xAxisText);
+      var xAxis = d3.svg.axis().scale(xScale).orient("bottom")
+        .ticks(5)
+        .tickFormat(d3.format("n"));
+
+      //y axis
+      var yAxisG = plotArea.append("g");
+      var yAxisLabel = yAxisG.append("text")
+        .style("text-anchor", "middle")
+        .attr("transform", "translate(-" + yAxisLabelOffset + "," + (innerHeight/2) + ") rotate(-90)")
+        .text(yAxisText);
+      var yAxis = d3.svg.axis().scale(yScale).orient("left")
+        .ticks(5);
+
       function render(data){
         xScale.domain(d3.extent(data, function (d){ return d[xValue]; }));
         yScale.domain(d3.extent(data, function (d){ return d[yValue]; }));
+        colorScale.domain(d3.extent(data, function(d) { return d.species;}));
+
+        xAxisG.call(xAxis);
+        yAxisG.call(yAxis);
 
         //Data Binding
-        var circles = svg.selectAll("circle").data(data);
+        var circles = plotArea.selectAll("circle").data(data);
 
         //Enter
         circles.enter().append("circle").attr("r", circleRadius);
         circles
           .attr("cx", function (d){ return xScale(d[xValue]); })
           .attr("cy", function (d){ return yScale(d[yValue]); })
-          .attr("fill", "none")
-          .attr("stroke", circleColor);
+          .attr("stroke", function(d) { return colorScale(d.species);})
 
         //Exit
         circles.exit().remove();
