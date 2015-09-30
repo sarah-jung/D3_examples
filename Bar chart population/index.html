@@ -10,6 +10,11 @@
         font: 10px sans-serif;
         text-anchor: middle;
       }
+      #ageRects rect {
+        fill:black;
+        stroke:white;
+        opacity:0.5;
+      }
     </style>
   </head>
   <body>
@@ -31,14 +36,14 @@
       .attr("width",outerWidth)
       .attr("height",outerHeight);
 
-    var plotArea = svg.append("g")
+    var plotArea = svg.append("g").attr("id","plotArea")
       .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
     var yScale = d3.scale.linear().range([innerHeight,0]);
     var colorScale = d3.scale.category10();
 
-    var chart = plotArea.append("g");
-    var yAxisGroup = plotArea.append("g");
+    var chart = plotArea.append("g").attr("id","chart");
+    var yAxisGroup = plotArea.append("g").attr("id","yAxisGroup");
     var yAxisLabel = yAxisGroup.append("text")
       .style("text-anchor", "middle")
       .attr("transform", "translate(-" + yAxisLabelOffset + "," + (innerHeight/2) + ") rotate(-90)")
@@ -57,16 +62,32 @@
 
       //Data Binding
       var bar = chart.selectAll("g").data(data)
-        .enter().append("g")
+        .enter().append("g").classed("bar",true)
         .attr("transform", function(d,i) {return "translate(" + (i*barWidth + (i+1)*gap) + ",0)";});
 
-      //Set bar with
+      //Set bar width
       bar.append("rect")
         .attr("y", function(d) {return yScale(d.population);})
         .attr("height", function(d) {return innerHeight - yScale(d.population);})
         .attr("width", barWidth)
         .attr("opacity","0.75")
         .attr("fill", function(d) {return colorScale(d.country);});
+
+      var ageRects = bar.append("g").attr("id","ageRects");
+
+      //Age distrubution
+      ageRects.append("rect")
+        .attr("y", function(d) {return yScale(d.population);})
+        .attr("width", barWidth)
+        .attr("height", function(d) {return yScale(d.young);})
+      ageRects.append("rect")
+        .attr("y", function(d) {return yScale(d.population);})
+        .attr("width", barWidth)
+        .attr("height", function(d) {return yScale(d.mid);});
+      ageRects.append("rect")
+        .attr("y", function(d) {return yScale(d.population);})
+        .attr("width", barWidth)
+        .attr("height", function(d) {return yScale(d.old);});
 
       //Add label
       bar.append("text")
@@ -106,7 +127,10 @@
 
     function type(d)
     {
-      d.population = (+d.population / 1000000);
+      d.young = +d._0to14 / 1000000;
+      d.mid = +d._15to64 / 1000000;
+      d.old = +d._65up / 1000000;
+      d.population = (d.young + d.mid + d.old);
       return d;
     }
 
