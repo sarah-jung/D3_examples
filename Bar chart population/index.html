@@ -10,11 +10,6 @@
         font: 10px sans-serif;
         text-anchor: middle;
       }
-      #ageRects rect {
-        fill:black;
-        stroke:white;
-        opacity:0.5;
-      }
     </style>
   </head>
   <body>
@@ -40,6 +35,7 @@
       .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
     var yScale = d3.scale.linear().range([innerHeight,0]);
+    var ageScale = d3.scale.linear().range([0,innerHeight]);
     var colorScale = d3.scale.category10();
 
     var chart = plotArea.append("g").attr("id","chart");
@@ -56,6 +52,7 @@
 
       console.log(data);
       yScale.domain([ 0 , d3.max(data, function(d) {return d.population;}) ]);
+      ageScale.domain([ 0 , d3.max(data, function(d) {return d.population;}) ]);
       colorScale.domain(d3.extent(data, function(d) {return d.country;}));
 
       yAxisGroup.call(yAxis);
@@ -70,24 +67,26 @@
         .attr("y", function(d) {return yScale(d.population);})
         .attr("height", function(d) {return innerHeight - yScale(d.population);})
         .attr("width", barWidth)
-        .attr("opacity","0.75")
         .attr("fill", function(d) {return colorScale(d.country);});
 
-      var ageRects = bar.append("g").attr("id","ageRects");
+      var ageRects = bar.append("g").attr("id","ageRects").attr("opacity","0");
 
       //Age distrubution
       ageRects.append("rect")
         .attr("y", function(d) {return yScale(d.population);})
         .attr("width", barWidth)
-        .attr("height", function(d) {return yScale(d.young);})
+        .attr("height", function(d) {return ageScale(d.old);})
+        .attr("fill","red");
       ageRects.append("rect")
-        .attr("y", function(d) {return yScale(d.population);})
+        .attr("y", function(d) {return yScale(d.population) + ageScale(d.old) ;})
         .attr("width", barWidth)
-        .attr("height", function(d) {return yScale(d.mid);});
+        .attr("height", function(d) {return ageScale(d.mid);})
+        .attr("fill","green");
       ageRects.append("rect")
-        .attr("y", function(d) {return yScale(d.population);})
+        .attr("y", function(d) {return yScale(d.population) + ageScale(d.old) + ageScale(d.mid);})
         .attr("width", barWidth)
-        .attr("height", function(d) {return yScale(d.old);});
+        .attr("height", function(d) {return ageScale(d.young);})
+        .attr("fill","blue");
 
       //Add label
       bar.append("text")
@@ -105,20 +104,16 @@
       //hover
       bar.on("mouseover", function()
         {
-          d3.select(this).select("rect")
-            .attr("opacity", "1")
-            .attr("stroke","black");
-          d3.select(this).select("#populationValue")
+          d3.select(this).select("#ageRects")
+            .transition()
+            .duration(300)
             .attr("opacity", "1");
         });
       bar.on("mouseout", function(d)
         {
-          d3.select(this).select("rect")
+          d3.select(this).select("#ageRects")
             .transition()
-            .duration(250)
-            .attr("opacity", "0.75")
-            .attr("stroke","none");
-          d3.select(this).select("#populationValue")
+            .duration(300)
             .attr("opacity", "0");
         });
 
